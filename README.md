@@ -1,42 +1,42 @@
-# Détection de fraudes par carte bancaire — Notebook & Modèles
+# Credit Card Fraud Detection — Notebook & Models
 
 
-Ce README documente le notebook **fraud_detection.ipynb** : de l'exploration des données jusqu'à l'entraînement et l'évaluation de modèles de classification pour la détection de fraudes.
+This README documents the **fraud_detection.ipynb** notebook: from quick EDA to training and evaluating classifiers for fraud detection.
 
-- **Jeu de données** : `creditcard.csv` (transactions anonymisées par PCA, cible `Class`).
-- **Taille** : 284807 lignes × 31 colonnes.
-- **Déséquilibre** : classe 1 (fraude) ≈ 0.173% (492 cas) vs classe 0 (légitime) ≈ 99.827% (284315 cas).
+- **Dataset**: `creditcard.csv` (anonymized transactions via PCA-like components, target = `Class`).
+- **Size**: 284807 rows × 31 columns.
+- **Imbalance**: class 1 (fraud) ≈ 0.173% (492) vs class 0 (legit) ≈ 99.827% (284315).
 
-## 1) Exploration rapide (EDA)
-- Aucune valeur manquante détectée selon l'aperçu initial.
-- **Montant** très asymétrique (skewness ≈ **16.978**). Normal.
+## 1) Quick EDA
+- No missing values detected in the initial overview.
+- **Amount** is heavily skewed (skewness ≈ **16.978**), which is expected.
 
-**Distribution de la cible**
+**Target distribution**
 
-![Distribution de la classe](assets/class_distribution_1670778c.png)
-
-
-## 2) Prétraitement
-
-- **Standardisation de `Amount`** uniquement (`StandardScaler`) ; les variables `V1..V28` sont déjà « normalisées » (PCA).
-- **Découpage**: `train_test_split(..., stratify=y)` pour conserver les proportions.
-- **Pipeline scikit-learn**: `ColumnTransformer` + modèle, afin d'assurer une inférence reproductible.
-
-## 3) Modèles & réglages
-
-- **Régression Logistique** : `class_weight="balanced"`, grille (`C`, `penalty`, `solver`), `scoring="roc_auc"`.
-- **Random Forest** : baseline `class_weight="balanced"`, puis `RandomizedSearchCV` (n_estimators, max_depth, min_samples_leaf, max_features, max_samples), `scoring="roc_auc"`.
-- **XGBoost** : `RandomizedSearchCV` puis `GridSearchCV` ciblant **`average_precision` (PR-AUC)**, puis entraînement final avec **early stopping** sur un jeu de validation (métrique `aucpr`).
-**Courbe de validation (RandomForest / max_depth → Recall)**
-
-![Validation Curve RF](assets/rf_validation_curve_c04977ff.png)
+![Class distribution](images/class_distribution.png)
 
 
-## 4) Évaluation & résultats
+## 2) Preprocessing
 
-**Comparatif sur le jeu de test**
+- **Standardize `Amount`** only (`StandardScaler`); variables `V1..V28` are already scaled (PCA-like).
+- **Split**: `train_test_split(..., stratify=y)` to preserve class proportions.
+- **scikit-learn Pipeline**: `ColumnTransformer` + estimator to ensure reproducible inference.
 
-| Modèle | ROC-AUC | PR-AUC | Rappel | Précision | F1 |
+## 3) Models & tuning
+
+- **Logistic Regression**: `class_weight='balanced'`, grid over (`C`, `penalty`, `solver`), `scoring='roc_auc'`.
+- **Random Forest**: baseline with `class_weight='balanced'`, then `RandomizedSearchCV` over (`n_estimators`, `max_depth`, `min_samples_leaf`, `max_features`, `max_samples`), `scoring='roc_auc'`.
+- **XGBoost**: `RandomizedSearchCV` → `GridSearchCV` targeting **`average_precision` (PR-AUC)**, then final training with **early stopping** on a validation set (`eval_metric='aucpr'`).
+**Validation curve (RandomForest / max_depth → Recall)**
+
+![Validation Curve RF](images/validation_curve_rf.png)
+
+
+## 4) Evaluation & results
+
+**Test-set comparison**
+
+| Model | ROC-AUC | PR-AUC | Recall | Precision | F1 |
 |---|---:|---:|---:|---:|---:|
 | Logistic Regression | 0.9724 | 0.6929 | 0.8862 | 0.0637 | 0.1188 |
 | Random Forest (tuned) | 0.9738 | 0.8321 | 0.7724 | 0.9048 | 0.8333 |
@@ -44,75 +44,91 @@ Ce README documente le notebook **fraud_detection.ipynb** : de l'exploration des
 | Random Forest (tuned) | 0.9738 | 0.8321 | 0.7724 | 0.9048 | 0.8333 |
 | XGBoost (baseline) | 0.9831 | 0.8608 | 0.8374 | 0.8306 | 0.8340 |
 
-| Modèle | ROC-AUC | PR-AUC | Rappel | Précision | F1 |
-|---|---:|---:|---:|---:|---:|
-| Logistic Regression | 0.9724 | 0.6929 | 0.8862 | 0.0637 | 0.1188 |
-| Random Forest (tuned) | 0.9738 | 0.8321 | 0.7724 | 0.9048 | 0.8333 |
-| Logistic Regression | 0.9724 | 0.6929 | 0.8862 | 0.0637 | 0.1188 |
-| Random Forest (tuned) | 0.9738 | 0.8321 | 0.7724 | 0.9048 | 0.8333 |
-| XGBoost (baseline) | 0.9831 | 0.8608 | 0.8374 | 0.8306 | 0.8340 |
+**Logistic Regression — diagnostics**
 
-**Régression Logistique — diagnostics**
+- Confusion matrix:
 
-- Matrice de confusion :
+![CM LogReg](images/confusion_matrix_logreg.png)
 
-![CM LogReg](assets/confusion_matrix_logreg_9bf69f09.png)
+- ROC:
 
-**XGBoost (modèle final)**
+![ROC LogReg](images/roc_curve_logreg.png)
 
-- **Itération optimale** (early stopping): **954**
-- **Meilleure PR-AUC (val.)**: **0.8397**
-- **Seuil optimisé**: **0.855**
-- **À ce seuil** → Précision **0.967**, Rappel **0.797**, F1 **0.874**
+- Precision–Recall:
 
-_Remarque_: sur données très déséquilibrées, **PR-AUC** est plus informative que ROC-AUC.
+![PR LogReg](images/pr_curve_logreg.png)
+
+**XGBoost (final model)**
+
+- **Best iteration** (early stopping): **954**
+- **Best validation PR-AUC**: **0.8397**
+- **Optimized threshold**: **0.855**
+- **At this threshold** → Precision **0.967**, Recall **0.797**, F1 **0.874**
+
+_Note_: on highly imbalanced data, **PR-AUC** is more informative than ROC-AUC.
 
 
-## 5) Export du modèle & inférence
+## 5) Model export & inference
 
-Le pipeline final est sérialisé avec `joblib` : `../models/xgb_final_model.pkl`.
+The final pipeline is serialized with `joblib`: `models/xgb_final_model.pkl`.
 
-**Charger et prédire**
+**Load and predict**
 
 ```python
 import joblib
 import pandas as pd
+import json
 
-model = joblib.load("models/xgb_final_model.pkl")  # chemin relatif depuis la racine du projet
-X_new = pd.DataFrame([...])  # mêmes colonnes que l'entraînement
+model = joblib.load("models/xgb_final_model.pkl")  # path from repo root
+X_new = pd.DataFrame([...])  # same columns as training
 probas = model.predict_proba(X_new)[:, 1]
-preds = (probas >= 0.855).astype(int)  # seuil issu du notebook (à ajuster selon coût métier)
+
+# Optional: read decision threshold from JSON
+thr = 0.855  # replace by reading models/threshold.json if you add it
+preds = (probas >= thr).astype(int)
 ```
 
-## 6) Reproductibilité
+## 6) Reproducibility
 
-- Fixation des graines (`random_state=42`).
-- Pipelines scikit-learn garantissant le même prétraitement en entraînement et inférence.
-- **À prévoir dans le repo** (recommandé) :
-  - `requirements.txt` ou `environment.yml`,
-  - dossier `data/` (non versionné) avec `creditcard.csv`,
-  - dossiers `images/`, `models/`, `notebooks/`, `reports/`,
-  - script `train.py` (optionnel) pour rejouer l’entraînement hors notebook.
+- Fixed seeds (`random_state=42`).
+- Pipelines ensure the same preprocessing at train and inference time.
+- Recommended repo layout:
+  - `data/` (not versioned) with `creditcard.csv`
+  - `images/`, `models/`, `notebooks/`, `reports/`
+  - `requirements.txt`
+  - optional: `train.py` to re-run training outside notebooks
 
-## 7) Limites & pistes d'amélioration (80/20)
+## 7) Limitations & improvement ideas (80/20)
 
-- **Seuil décisionnel**: optimiser vs. **coûts** (faux positifs vs. vrais positifs). Fournir une courbe précision–rappel + table `Precision@K`.
-- **Explicabilité rapide**: importance des variables (XGBoost `feature_importances_`), SHAP (optionnel).
-- **Calibration**: vérifier la calibration des probabilités (ex. `CalibratedClassifierCV`).
-- **Drift**: prévoir suivi des dérives (statistiques de base & taux de fraude au fil du temps).
+- **Decision threshold**: optimize vs **business costs** (false positives vs true positives). Provide a Precision–Recall curve and `Precision@K` table.
+- **Quick explainability**: feature importances (XGBoost) and optionally SHAP.
+- **Calibration**: check probability calibration (e.g., `CalibratedClassifierCV`).
+- **Drift monitoring**: track basic statistics & fraud rate over time.
 
-## 8) Comment rejouer le notebook
+## 8) How to run
 
-1. Placer `creditcard.csv` dans `data/` et ajuster le chemin dans la cellule de chargement.
-2. Installer les dépendances minimales :
+1. Put `creditcard.csv` in `data/` and adjust its path in the loading cell.
+2. Install dependencies:
    ```bash
    pip install -U pandas scikit-learn xgboost matplotlib seaborn joblib
    ```
-3. Exécuter toutes les cellules. Les figures clés sont sauvegardées et également exportées ci-dessus.
+3. Run all cells. Key figures are saved to `images/` and referenced above.
 
-## 9) À faire / Propositions
+## 9) To‑do / Proposals
 
-- [ ] Exporter systématiquement **toutes les figures** en `.png` (DPI ≥ 200) vers `images/` (tu as déjà des `plt.savefig(...)` pour la LogReg 👍).
-- [ ] Générer automatiquement un **rapport** (ex. `reports/metrics.json` + `reports/figures.md`) en fin de notebook.
-- [ ] Ajouter `requirements.txt` (je peux te le déduire depuis le notebook si tu veux).
-- [ ] Ajouter un **script d'inférence** minimal (`predict.py`) qui charge le modèle et applique le seuil.
+- [ ] Save **all figures** to `images/` (DPI ≥ 200) via a small helper (see below).
+- [ ] Write out a **metrics report** automatically at the end (e.g., `reports/metrics.json` + `reports/figures.md`).
+- [ ] Add `models/threshold.json` with the chosen operating threshold.
+- [ ] Add a minimal **inference script** (`predict.py`) that loads the model and applies the threshold.
+
+### (Optional) Helper to systematically save figures
+
+```python
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+IMAGES_DIR = Path("images"); IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+def savefig(name):
+    plt.savefig(IMAGES_DIR / f"{name}.png", dpi=300, bbox_inches="tight")
+```
+Use `savefig("roc_curve_logreg")` right before `plt.show()`.
