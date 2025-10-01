@@ -27,7 +27,7 @@ I first explored the dataset to understand its structure:
 
 **Target distribution**
 
-![Class distribution](images/class_distribution.png)
+<img src="images/class_distribution.png" alt="Class distribution" width="500"/>
 
 ---
 
@@ -55,7 +55,7 @@ I compared several models:
 
 **Validation curve (Random Forest - max_depth vs Recall)**
 
-![Validation Curve RF](images/validation_curve_rf.png)
+<img src="images/validation_curve_rf.png" alt="Validation Curve RF" width="500"/>
 
 ---
 
@@ -76,15 +76,15 @@ For illustration, here are the diagnostic plots of Logistic Regression:
 
 - Confusion matrix  
 
-![CM LogReg](images/confusion_matrix_logreg.png)
+<img src="images/confusion_matrix_logreg.png" alt="Confusion Matrix LogReg" width="500"/>
 
 - ROC curve  
 
-![ROC LogReg](images/roc_curve_logreg.png)
+<img src="images/roc_curve_logreg.png" alt="ROC Curve LogReg" width="500"/>
 
 - Precision–Recall curve  
 
-![PR LogReg](images/pr_curve_logreg.png)
+<img src="images/pr_curve_logreg.png" alt="PR Curve LogReg" width="500"/>
 
 ---
 
