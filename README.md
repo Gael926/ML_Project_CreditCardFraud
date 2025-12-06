@@ -1,29 +1,40 @@
 # Credit Card Fraud Detection
 
-Fraud detection is a real-world and highly challenging problem due to the massive class imbalance.  
-This project was an opportunity for me to apply machine learning to a practical case,  
+Fraud detection is a real-world and highly challenging problem due to the massive class imbalance.
+This project was an opportunity for me to apply machine learning to a practical case,
 from exploratory data analysis all the way to deploying a final model ready for inference.
 
 ---
 
 ## Dataset
 
-The dataset used is the well-known **Kaggle Credit Card Fraud Detection dataset** (`creditcard.csv`).  
+The dataset used is the well-known **Kaggle Credit Card Fraud Detection dataset** (`creditcard.csv`).
+🔗 **Source:** [Kaggle - Credit Card Fraud Detection Dataset](https://www.kaggle.com/mlg-ulb/creditcardfraud)
 It contains anonymized transaction features (PCA-transformed) plus the original `Amount` and `Time` variables.
 
-- **Size**: 284,807 transactions × 31 features  
-- **Target**: `Class` (0 = legitimate, 1 = fraud)  
+- **Size**: 284,807 transactions x 31 features
+- **Target**: `Class` (0 = legitimate, 1 = fraud)
 - **Imbalance**: only **492 frauds (0.173%)** vs **284,315 legitimate (99.827%)**
 
 ---
 
-## 📊 Step 1 - Exploratory Data Analysis (EDA)
+## Project Structure
+
+The project follows a hybrid approach:
+
+- `src/`: Contains the source code modules (data loading, preprocessing, training, evaluation) for the automated pipeline.
+- `main.py`: Main script to execute the entire pipeline from the terminal.
+- `notebooks/fraud_detection.ipynb`: The original comprehensive notebook for exploration, visualization, and model experimentation.
+
+---
+
+## Step 1 - Exploratory Data Analysis (EDA)
 
 I first explored the dataset to understand its structure:
 
-- No missing values  
-- The **`Amount`** feature is highly skewed (skewness ≈ **16.98**)  
-- The target distribution is extremely imbalanced  
+- No missing values
+- The **`Amount`** feature is highly skewed (skewness = **16.98**)
+- The target distribution is extremely imbalanced
 
 **Target distribution**
 
@@ -31,26 +42,26 @@ I first explored the dataset to understand its structure:
 
 ---
 
-## ⚙️ Step 2 - Preprocessing
+## Step 2 - Preprocessing
 
 The preprocessing was kept minimal:
 
-- Dropped **`Time`** (useless for fraud detection)  
-- Separated the target **`Class`**  
-- Standardization applied only on **`Amount`** (using `StandardScaler`)  
-- The PCA components `V1…V28` are already scaled  
-- Data split with `train_test_split(..., stratify=y)` to preserve the fraud ratio  
+- Dropped **`Time`** (useless for fraud detection)
+- Separated the target **`Class`**
+- Standardization applied only on **`Amount`** (using `StandardScaler`)
+- The PCA components `V1...V28` are already scaled
+- Data split with `train_test_split(..., stratify=y)` to preserve the fraud ratio
 - Pipelines (`ColumnTransformer` + estimator) used to ensure reproducibility
 
 ---
 
-## 🤖 Step 3 - Models and Training
+## Step 3 - Models and Training
 
 I compared several models:
 
-- **Logistic Regression** with class balancing and hyperparameter tuning  
-- **Random Forest** with `RandomizedSearchCV` and further tuning (tested depth, number of trees, sampling)  
-- **XGBoost** with both random and grid search, optimizing directly for **PR-AUC** (better suited for imbalanced data).  
+- **Logistic Regression** with class balancing and hyperparameter tuning (`GridSearchCV`)
+- **Random Forest** with `RandomizedSearchCV` and further tuning (tested depth, number of trees, sampling)
+- **XGBoost** with both random and grid search, optimizing directly for **PR-AUC** (better suited for imbalanced data).
   Final training included **early stopping** on a validation set using PR-AUC.
 
 **Validation curve (Random Forest - max_depth vs Recall)**
@@ -59,9 +70,9 @@ I compared several models:
 
 ---
 
-## ✅ Step 4 - Evaluation and Results
+## Step 4 - Evaluation and Results
 
-I evaluated all models on the test set.  
+I evaluated all models on the test set.
 Here are the main metrics (ROC-AUC, PR-AUC, Recall, Precision, F1):
 
 | Model | ROC-AUC | PR-AUC | Recall | Precision | F1 |
@@ -74,42 +85,42 @@ The results show that while Logistic Regression struggles due to imbalance, Rand
 
 For illustration, here are the diagnostic plots of Logistic Regression:
 
-- Confusion matrix  
+- Confusion matrix
 
 <img src="images/confusion_matrix_logreg.png" alt="Confusion Matrix LogReg" width="500"/>
 
-- ROC curve  
+- ROC curve
 
 <img src="images/roc_curve_logreg.png" alt="ROC Curve LogReg" width="500"/>
 
-- Precision–Recall curve  
+- Precision-Recall curve
 
 <img src="images/pr_curve_logreg.png" alt="PR Curve LogReg" width="500"/>
 
 ---
 
-## 🏆 Step 5 - Final Model: XGBoost
+## Step 5 - Final Model: XGBoost
 
 The final model chosen is **XGBoost**, trained with early stopping:
 
-- **Best iteration**: 954  
-- **Best validation PR-AUC**: 0.8397  
+- **Best iteration**: 954
+- **Best validation PR-AUC**: 0.8397
 
-At the **default threshold (0.5)**, the model achieves:  
-- Precision = 0.933  
-- Recall = 0.797  
-- F1 = 0.860  
+At the **default threshold (0.5)**, the model achieves:
+- Precision = 0.933
+- Recall = 0.797
+- F1 = 0.860
 
-At the **optimized threshold (0.855)**, tuned for the best F1-score, the model achieves:  
-- Precision = 0.967  
-- Recall = 0.797  
-- F1 = 0.874  
+At the **optimized threshold (0.855)**, tuned for the best F1-score, the model achieves:
+- Precision = 0.967
+- Recall = 0.797
+- F1 = 0.874
 
 This shows that by adjusting the threshold, XGBoost provides a strong balance between catching frauds (recall) and avoiding false alarms (precision).
 
 ---
 
-## 💻 Step 6 - Using the Model
+## Step 6 - Using the Model
 
 The final pipeline was exported with `joblib`:
 
@@ -135,9 +146,32 @@ threshold = 0.855
 preds = (probas >= threshold).astype(int)
 ```
 
-## 📝Conclusion
+---
 
-This project highlighted the challenge of detecting fraud in a highly imbalanced dataset.  
-After testing multiple models, **XGBoost** proved to be the best compromise.  
+## Installation and Usage
+
+To reproduce the results or train the model:
+
+1.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Run the automated pipeline**:
+    This script loads data, trains all models (using modular code in `src/`), and saves the final XGBoost model.
+    ```bash
+    python main.py
+    ```
+
+3.  **Explore via Notebook**:
+    You can also run the original comprehensive notebook for a step-by-step analysis:
+    - `jupyter notebook notebooks/fraud_detection.ipynb`
+
+---
+
+## Conclusion
+
+This project highlighted the challenge of detecting fraud in a highly imbalanced dataset.
+After testing multiple models, **XGBoost** proved to be the best compromise.
 At the optimized threshold, it reaches **96.7% precision** and **79.7% recall**, making it both robust and practical for real-world fraud detection.
 This balance allows the model to catch most fraudulent transactions while minimizing false alarms, which is crucial in real banking systems.

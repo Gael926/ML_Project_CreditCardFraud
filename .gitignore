@@ -1,6 +1,15 @@
-# Ignore dataset files (too large for GitHub)
 data/*
-!data/README.md
+!data/.gitkeep
 
-# Ignore Jupyter checkpoints
+models/*
+!models/.gitkeep
+
 **/.ipynb_checkpoints/
+
+__pycache__/
+*.pyc
+.DS_Store
+
+venv/
+env/
+.env
